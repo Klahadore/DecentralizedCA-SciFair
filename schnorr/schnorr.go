@@ -11,6 +11,11 @@ import (
 	"math/big"
 )
 
+type Schnorr struct {
+	R *big.Int
+	S *big.Int
+}
+
 // Generates random Hexadecimal nonce of type big.Int
 func NonceGen() (*[]byte, error) {
 	byteSlice := make([]byte, 16)
@@ -27,7 +32,7 @@ func NonceGen() (*[]byte, error) {
 
 }
 
-func Sign(privateKey *big.Int, message [32]byte) (*[64]byte, error) {
+func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
 	// instantiate secp
 	curve := elliptic.P256()
 
@@ -38,9 +43,35 @@ func Sign(privateKey *big.Int, message [32]byte) (*[64]byte, error) {
 
 	// compute the commitment R = g^k ∈ G
 	gx, gy := curve.G
-	R, err := curve.ScalarBaseMult(gx * k)
-	if err != nil {
-		return nil, err
-	}
+	Rx, Ry := curve.ScalarBaseMult(k)
+	R := bit.NewInt(0).SetBytes(Rx.Bytes)
 
+	// Calculate the hash of R || message
+	h := sha256.New()
+	h.Write(R.Bytes())
+	hash := h.Sum(nil)
+
+	// Calculate s, s=k - h * priv
+	hXprivateKey := new(big.Int).Mult(hash, privateKey)
+	s := new(big.Int).Sub(k, hXprivateKey)
+
+	return &Schnorr{R, s}, nil
+}
+
+// Verify verifies a Schnorr signature for the given message and public key
+func Verify(pub *ecdsa.PublicKey, msg []byte, sig *Schnorr) (bool, err) {
+	// Calculate the hash of R || message
+	h := sha256.New()
+	h.Write(sig.R.Bytes())
+	h.Write(msg)
+	hash := h.Sum(nil)
+
+	// Calculate the curve point sG + hash * pub
+	curve := elliptic.P256()
+	sGx, sGy := curve.ScalarBaseMult(sig.S.Bytes())
+	hashX, hashY := curve.ScalarMult(pub.X, pub.Y, hash)
+	x, y := curve.Add(sGx, sGy, hashX, hashY)
+
+	// Check that R = sG + hash * pub
+	return sig.R.Cmp(x) == 0, nil
 }
