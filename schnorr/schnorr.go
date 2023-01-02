@@ -59,7 +59,7 @@ func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
 }
 
 // Verify verifies a Schnorr signature for the given message and public key
-func Verify(pub *ecdsa.PublicKey, msg []byte, sig *Schnorr) (bool, err) {
+func Verify(pub *ecdsa.PublicKey, msg []byte, sig *Schnorr) bool {
 	// Calculate the hash of R || message
 	h := sha256.New()
 	h.Write(sig.R.Bytes())
@@ -73,5 +73,5 @@ func Verify(pub *ecdsa.PublicKey, msg []byte, sig *Schnorr) (bool, err) {
 	x, y := curve.Add(sGx, sGy, hashX, hashY)
 
 	// Check that R = sG + hash * pub
-	return sig.R.Cmp(x) == 0, nil
+	return sig.R.Cmp(x) == 0
 }
