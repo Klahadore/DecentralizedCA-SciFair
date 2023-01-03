@@ -19,7 +19,7 @@ func computePubKey(pubKeys []*PublicKey, curve *elliptic.Curve) (*big.Int, error
 	finalKey := big.NewInt(0)
 
 	for i := 1; i < len(pubKeys); i++ {
-		bx, _ = curve.ScalarMult(pubKey[i].x, pubKey[i].y, k)
+		finalKey = finalKey.Mul(finalKey, pubKeys[i].x)
 	}
 }
 
