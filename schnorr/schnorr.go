@@ -11,6 +11,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"fmt"
 	"math/big"
 )
 
@@ -48,7 +49,7 @@ func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
 	// Only the x value is used, the y value is discarded
 	R, _ := curve.ScalarBaseMult(*k)
 	//R := big.NewInt(0).SetBytes(Rx.Bytes)
-
+	fmt.Println(R.String())
 	// Calculate the hash of R || message
 	h := sha256.New()
 	h.Write(R.Bytes())
@@ -67,16 +68,22 @@ func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
 }
 
 // Verify verifies a Schnorr signature for the given message and public key
-func Verify(pubKey *big.Int, message []byte, signature *Schnorr) bool {
+func Verify(pkx, pky *big.Int, message []byte, signature *Schnorr) bool {
+
+	curve := elliptic.P256()
 
 	// Calculate r_v, r_v = g^s * y^e
+	gs, _ := curve.ScalarBaseMult(signature.S.Bytes())
+	ye, _ := curve.ScalarMult(pkx, pky, signature.E.Bytes())
 	r := new(big.Int)
-	r.Mul(r.Exp(g, signature.S, nil), r.Exp(pubKey, signature.E, nil))
+	r.Mul(gs, ye)
 
+	fmt.Println("verify r is" + r.String())
 	// Calculate the hash of r_v || message
 	h := sha256.New()
 	h.Write(r.Bytes())
 	h.Write(message)
+
 	hToInt := new(big.Int).SetBytes(h.Sum(nil))
 
 	// Check that R = sG + hash * pub
