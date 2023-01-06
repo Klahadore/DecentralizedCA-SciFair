@@ -22,7 +22,7 @@ type Schnorr struct {
 
 // Generates random Hexadecimal nonce of type big.Int
 func NonceGen() (*[]byte, error) {
-	byteSlice := make([]byte, 16)
+	byteSlice := make([]byte, 32)
 
 	_, err := rand.Read(byteSlice)
 	if err != nil {
@@ -45,14 +45,14 @@ func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
 		return nil, err
 	}
 
-	// compute the commitment R = gk ∈ G
+	// compute the commitment r = g^k ∈ G
 	// Only the x value is used, the y value is discarded
-	R, _ := curve.ScalarBaseMult(*k)
-	//R := big.NewInt(0).SetBytes(Rx.Bytes)
-	fmt.Println(R.String())
-	// Calculate the hash of R || message
+	r, _ := curve.ScalarBaseMult(*k)
+
+	fmt.Println(r.String())
+	// Calculate the hash of r || message
 	h := sha256.New()
-	h.Write(R.Bytes())
+	h.Write(r.Bytes())
 	h.Write(message)
 	hash := h.Sum(nil)
 	// converts hash to big.Int
@@ -61,7 +61,7 @@ func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
 
 	// Calculate s, s = k - privateKey * e
 	kToInt := new(big.Int).SetBytes(*k)
-	hXprivateKey := new(big.Int).Mul(e, privateKey)
+	hXprivateKey := new(big.Int).Mul(privateKey, e)
 	s := new(big.Int).Sub(kToInt, hXprivateKey)
 
 	return &Schnorr{s, e}, nil
@@ -73,10 +73,10 @@ func Verify(pkx, pky *big.Int, message []byte, signature *Schnorr) bool {
 	curve := elliptic.P256()
 
 	// Calculate r_v, r_v = g^s * y^e
-	gs, _ := curve.ScalarBaseMult(signature.S.Bytes())
-	ye, _ := curve.ScalarMult(pkx, pky, signature.E.Bytes())
-	r := new(big.Int)
-	r.Mul(gs, ye)
+	gx, gy := curve.ScalarBaseMult(signature.S.Bytes())
+	yx, yy := curve.ScalarMult(pkx, pky, signature.E.Bytes())
+	r, _ := curve.Add(gx, gy, yx, yy)
+	//r := new(big.Int).Add(gx, yx)
 
 	fmt.Println("verify r is" + r.String())
 	// Calculate the hash of r_v || message
