@@ -20,9 +20,9 @@ type Schnorr struct {
 	E *big.Int
 }
 
-// Generates random Hexadecimal nonce of type big.Int
+// Generates random int less than q, in type []byte
 func NonceGen() (*[]byte, error) {
-	byteSlice := make([]byte, 32)
+	byteSlice := make([]byte, 16)
 
 	_, err := rand.Read(byteSlice)
 	if err != nil {
@@ -31,8 +31,12 @@ func NonceGen() (*[]byte, error) {
 
 	//nonce := new(big.Int)
 	//nonce.SetBytes(byteSlice)
+	curve := elliptic.P256()
+	num := new(big.Int).SetBytes(byteSlice)
+	num.Mod(num, curve.Params().N)
 
-	return &byteSlice, nil
+	b := num.Bytes()
+	return &b, nil
 
 }
 
@@ -41,6 +45,7 @@ func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
 	curve := elliptic.P256()
 
 	k, err := NonceGen()
+
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +53,7 @@ func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
 	// compute the commitment r = g^k ∈ G
 	// Only the x value is used, the y value is discarded
 	r, _ := curve.ScalarBaseMult(*k)
-
+	r.Mod(r, curve.Params().P)
 	fmt.Println(r.String())
 	// Calculate the hash of r || message
 	h := sha256.New()
@@ -59,11 +64,12 @@ func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
 	e := new(big.Int)
 	e.SetBytes(hash[:])
 
-	// Calculate s, s = k - privateKey * e
+	// Calculate s, s = k + privateKey * e
 	kToInt := new(big.Int).SetBytes(*k)
 	hXprivateKey := new(big.Int).Mul(privateKey, e)
-	s := new(big.Int).Sub(kToInt, hXprivateKey)
-
+	// s := new(big.Int).Add(kToInt, hXprivateKey).Mod(new(big.Int).Add(kToInt, hXprivateKey), curve.Params().P)
+	s := new(big.Int).Add(kToInt, hXprivateKey)
+	s.Mod(s, curve.Params().N)
 	return &Schnorr{s, e}, nil
 }
 
@@ -73,10 +79,10 @@ func Verify(pkx, pky *big.Int, message []byte, signature *Schnorr) bool {
 	curve := elliptic.P256()
 
 	// Calculate r_v, r_v = g^s * y^e
-	gx, gy := curve.ScalarBaseMult(signature.S.Bytes())
-	yx, yy := curve.ScalarMult(pkx, pky, signature.E.Bytes())
+	gx, gy := curve.ScalarBaseMult(signature.E.Bytes())
+	yx, yy := curve.ScalarMult(pkx, pky, signature.S.Bytes())
 	r, _ := curve.Add(gx, gy, yx, yy)
-	//r := new(big.Int).Add(gx, yx)
+	r = r.Mod(r, curve.Params().P)
 
 	fmt.Println("verify r is" + r.String())
 	// Calculate the hash of r_v || message
