@@ -41,7 +41,7 @@ func NonceGen() (*[]byte, error) {
 }
 
 func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
-	// instantiate secp
+	// instantiate curve
 	curve := elliptic.P256()
 
 	k, err := NonceGen()
@@ -67,7 +67,6 @@ func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
 	// Calculate s, s = k + privateKey * e
 	kToInt := new(big.Int).SetBytes(*k)
 	hXprivateKey := new(big.Int).Mul(privateKey, e)
-	// s := new(big.Int).Add(kToInt, hXprivateKey).Mod(new(big.Int).Add(kToInt, hXprivateKey), curve.Params().P)
 	s := new(big.Int).Add(kToInt, hXprivateKey)
 	s.Mod(s, curve.Params().N)
 	return &Schnorr{s, e}, nil
