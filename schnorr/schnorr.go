@@ -40,7 +40,16 @@ func NonceGen() (*[]byte, error) {
 
 }
 
+// func deterministicK(privateKey []byte, message [32]byte) (*big.Int, error) {
+// 	data := append(privateKey, message[:]...)
+// 	digest := sha256.Sum256(data)
+// 	k := new(big.Int).SetBytes(digest[:])
+// 	k.Mod(k, N)
+// 	return k, nil
+// }
+
 func Sign(privateKey *big.Int, message []byte) (*Schnorr, error) {
+
 	// instantiate curve
 	curve := elliptic.P256()
 
@@ -93,4 +102,23 @@ func Verify(pkx, pky *big.Int, message []byte, signature *Schnorr) bool {
 
 	// Check that R = sG + hash * pub
 	return hToInt.Cmp(signature.E) == 0
+}
+
+func intToBytes(bigInt *big.Int) []byte {
+	var bytes [32]byte
+	b := bigInt.Bytes()
+	copy(bytes[32-len(b):], b)
+	return bytes[:]
+}
+
+func hash(s []byte) []byte {
+	h := sha256.New()
+	h.Write(s)
+	hash := h.Sum(nil)
+	return hash
+}
+
+func bytesToInt(s []byte) *big.Int {
+	bigInt := new(big.Int).SetBytes(s)
+	return bigInt
 }
