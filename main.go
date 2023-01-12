@@ -1,7 +1,9 @@
 package main
 
 import (
-	//"crypto/ecdsa"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
@@ -10,7 +12,7 @@ import (
 )
 
 func main() {
-	curve := elliptic.P256()
+
 	// func GenerateKey(curve Curve, rand io.Reader) (priv []byte, x, y *big.Int, err error))
 
 	privateKey, x, y, err := elliptic.GenerateKey(curve, rand.Reader)
