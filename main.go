@@ -1,35 +1,23 @@
 package main
 
 import (
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-
-	"crypto/elliptic"
-	"crypto/rand"
 	"fmt"
+
 	"github.com/Klahadore/DecentralizedCA-SciFair/schnorr"
-	"math/big"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func main() {
-
-	// func GenerateKey(curve Curve, rand io.Reader) (priv []byte, x, y *big.Int, err error))
-
-	privateKey, x, y, err := elliptic.GenerateKey(curve, rand.Reader)
-	if err != nil {
-		fmt.Println("error has occured")
-		fmt.Println(err)
-	}
-	message := []byte("Hello Schnorr")
-
-	pkeyToInt := new(big.Int).SetBytes(privateKey)
-	signature, err := schnorr.Sign(pkeyToInt, message)
+	key, err := crypto.GenerateKey()
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Println(schnorr.Verify(x, y, message, signature))
+	message := []byte("hello schnorr")
 
+	signature, err := schnorr.Sign(key.D, &message)
+
+	fmt.Println(schnorr.Verify(key.PublicKey.X, key.PublicKey.Y, message, signature))
 }
 
 // func Sign(privateKey *big.Int, message []byte) (*Schnorr, error)

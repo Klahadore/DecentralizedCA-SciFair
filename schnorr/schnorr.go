@@ -42,18 +42,20 @@ func Sign(privateKey *big.Int, message *[]byte) (*Schnorr, error) {
 	curve := secp256k1.S256()
 
 	k, err := NonceGen()
-
 	if err != nil {
 		return nil, err
 	}
+	kInt := byteToInt(*k)
+	kInt.Mod(kInt, curve.N)
 
-	r, _ := curve.ScalarBaseMult(k)
+	r, _ := curve.ScalarBaseMult(*k)
 	fmt.Println(r.String())
 	e := hash(append(r.Bytes(), *message...))
+	eInt := new(big.Int).Mod(byteToInt(e), curve.N)
 
 	// s = k-xe
-	kInt := byteToInt(*k)
-	s := new(big.Int).Sub(kInt, privateKey.Mul(privateKey, byteToInt(e)))
+
+	s := new(big.Int).Sub(kInt, privateKey.Mul(privateKey, eInt))
 	s.Mod(kInt, curve.N)
 	return &Schnorr{s, byteToInt(e)}, nil
 }
@@ -63,7 +65,9 @@ func Verify(pkx, pky *big.Int, message []byte, signature *Schnorr) bool {
 	curve := secp256k1.S256()
 
 	// Calculate r_v, r_v = g^s * y^e
-	rx, _ := curve.Add(curve.ScalarBaseMult(signature.S), curve.ScalarMult(pkx, pky, signature.E))
+	x1, y1 := curve.ScalarBaseMult(signature.S.Bytes())
+	x2, y2 := curve.ScalarMult(pkx, pky, signature.E.Bytes())
+	rx, _ := curve.Add(x1, y1, x2, y2)
 	fmt.Println(rx.String())
 
 	e := hash(append(rx.Bytes(), message...))
