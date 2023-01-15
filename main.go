@@ -20,7 +20,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	fmt.Println(schnorr.Verify(key.PublicKey.X, key.PublicKey.Y, message, signature))
+	fmt.Println(schnorr.Verify(key.PublicKey.X, key.PublicKey.Y, &message, signature))
 }
 
 // func Sign(privateKey *big.Int, message []byte) (*Schnorr, error)
