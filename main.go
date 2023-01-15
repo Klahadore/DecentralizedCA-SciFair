@@ -13,9 +13,12 @@ func main() {
 		fmt.Println(err)
 	}
 
-	message := []byte("hello schnorr")
+	message := []byte("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhn")
 
 	signature, err := schnorr.Sign(key.D, &message)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	fmt.Println(schnorr.Verify(key.PublicKey.X, key.PublicKey.Y, message, signature))
 }

@@ -3,9 +3,10 @@
 package schnorr
 
 // Schnorr signature schemes vary and are not necessarily compatible with each other
-// This shows the original methods in CP Schnorrs paper, https://en.wikipedia.org/wiki/Schnorr_signature
 // The notation is the same as shown in the Wikipedia article.
 // Notation is not necessarily the same either.
+
+// This
 
 import (
 	"crypto/rand"
@@ -13,17 +14,17 @@ import (
 	"fmt"
 	"math/big"
 
+	//"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
 type Schnorr struct {
+	R *big.Int
 	S *big.Int
-	E *big.Int
 }
 
-// Generates random int less than q, in type []byte
 func NonceGen() (*[]byte, error) {
-	byteSlice := make([]byte, 16)
+	byteSlice := make([]byte, 8)
 
 	_, err := rand.Read(byteSlice)
 	if err != nil {
@@ -36,10 +37,14 @@ func NonceGen() (*[]byte, error) {
 
 }
 
+var curve (
+	secp256k1.S256()
+)
+
 func Sign(privateKey *big.Int, message *[]byte) (*Schnorr, error) {
 
 	// instantiate curve
-	curve := secp256k1.S256()
+	
 
 	k, err := NonceGen()
 	if err != nil {
@@ -50,31 +55,31 @@ func Sign(privateKey *big.Int, message *[]byte) (*Schnorr, error) {
 
 	r, _ := curve.ScalarBaseMult(*k)
 	fmt.Println(r.String())
+
 	e := hash(append(r.Bytes(), *message...))
-	eInt := new(big.Int).Mod(byteToInt(e), curve.N)
+	eInt := byteToInt(e)
 
-	// s = k-xe
-
-	s := new(big.Int).Sub(kInt, privateKey.Mul(privateKey, eInt))
+	s := new(big.Int).Sub(kInt, new(big.Int).Mul(privateKey, eInt))
 	s.Mod(kInt, curve.N)
-	return &Schnorr{s, byteToInt(e)}, nil
+	return &Schnorr{eInt, s}, nil
 }
 
 // Verify verifies a Schnorr signature for the given message and public key
 func Verify(pkx, pky *big.Int, message []byte, signature *Schnorr) bool {
-	curve := secp256k1.S256()
+
+
+	// e := hash(append(signature.R.Bytes(), message...))
+	// eInt := new(big.Int).Mod(byteToInt(e), curve.P)
 
 	// Calculate r_v, r_v = g^s * y^e
 	x1, y1 := curve.ScalarBaseMult(signature.S.Bytes())
-	x2, y2 := curve.ScalarMult(pkx, pky, signature.E.Bytes())
+	x2, y2 := curve.ScalarMult(pkx, pky, signature.R.Bytes())
 	rx, _ := curve.Add(x1, y1, x2, y2)
 	fmt.Println(rx.String())
 
 	e := hash(append(rx.Bytes(), message...))
-	eInt := new(big.Int).Mod(byteToInt(e), curve.N)
 
-	// Check that R = sG + hash * pub
-	return eInt.Cmp(signature.E) == 0
+	return signature.R.Cmp(byteToInt(e)) == 0
 }
 
 func byteToInt(bytes []byte) *big.Int {
