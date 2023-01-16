@@ -8,7 +8,7 @@ package schnorr
 import (
 	"crypto/rand"
 	"crypto/sha256"
-	"fmt"
+
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
@@ -50,7 +50,6 @@ func Sign(privateKey *big.Int, message *[]byte) (*Schnorr, error) {
 
 	R := Point{}
 	R.X, R.Y = curve.ScalarBaseMult(kInt.Bytes()) // r=k*g, g is the base point
-	fmt.Println(R.X.String())
 
 	e := hash(append(R.X.Bytes(), *message...))
 	eInt := byteToInt(e)
