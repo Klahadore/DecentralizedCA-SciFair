@@ -3,10 +3,7 @@
 package schnorr
 
 // Schnorr signature schemes vary and are not necessarily compatible with each other
-// The notation is the same as shown in the Wikipedia article.
-// Notation is not necessarily the same either.
-
-// This
+// Notation follows industry standards of using R,s form signatures.
 
 import (
 	"crypto/rand"
@@ -14,7 +11,6 @@ import (
 	"fmt"
 	"math/big"
 
-	//"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
@@ -29,15 +25,13 @@ type Schnorr struct {
 }
 
 func NonceGen() (*[]byte, error) {
-	byteSlice := make([]byte, 8)
+	byteSlice := make([]byte, 16)
 
 	_, err := rand.Read(byteSlice)
 	if err != nil {
 		return nil, err
 	}
 
-	//nonce := new(big.Int)
-	//nonce.SetBytes(byteSlice)
 	return &byteSlice, nil
 
 }
@@ -50,6 +44,7 @@ func Sign(privateKey *big.Int, message *[]byte) (*Schnorr, error) {
 	if err != nil {
 		return nil, err
 	}
+	// K must be in the set of mod N
 	kInt := byteToInt(*k)
 	kInt.Mod(kInt, curve.N)
 
