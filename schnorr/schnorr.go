@@ -46,8 +46,6 @@ var curve = secp256k1.S256()
 
 func Sign(privateKey *big.Int, message *[]byte) (*Schnorr, error) {
 
-	// instantiate curve
-
 	k, err := NonceGen()
 	if err != nil {
 		return nil, err
@@ -73,17 +71,17 @@ func Verify(pkx, pky *big.Int, message *[]byte, signature *Schnorr) bool {
 	e := hash(append(signature.R.X.Bytes(), *message...))
 
 	//Calculate r_v, r_v = g^s * y^e
-
 	yE := Point{}
 	yE.X, yE.Y = curve.ScalarMult(pkx, pky, e)
-	sgvx, _ := curve.Add(signature.R.X, signature.R.Y, yE.X, yE.Y)
+	gS := Point{}
+	gS.X, gS.Y = curve.ScalarBaseMult(signature.S.Bytes())
+	rv, _ := curve.Add(gS.X, gS.Y, yE.X, yE.Y)
+	// fmt.Println(rv.String())
 
-	sgx, _ := curve.ScalarBaseMult(signature.S.Bytes())
+	// hash must be calculated again, r cannot be compared.
+	ev := hash(append(rv.Bytes(), *message...))
 
-	fmt.Println(sgvx.String())
-	fmt.Println(sgx.String())
-
-	return sgx.Cmp(signature.R.X) == 0
+	return byteToInt(ev).Cmp(byteToInt(e)) == 0
 }
 
 func byteToInt(bytes []byte) *big.Int {
