@@ -30,8 +30,10 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	pubKey1Point := schnorr.Point{X: key1.PublicKey.X, Y: key1.PublicKey.Y}
+	pubKey2Point := schnorr.Point{X: key2.PublicKey.X, Y: key2.PublicKey.Y}
 
-	addedPubKeys, err := schnorr.AggregatePublicKeys(schnorr.Point{X: key1.PublicKey.X, Y: key1.PublicKey.Y}, schnorr.Point{X: key2.PublicKey.X, Y: key2.PublicKey.Y})
+	addedPubKeys, err := schnorr.AggregatePublicKeys(pubKey1Point, pubKey2Point)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -39,6 +41,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	fmt.Println(schnorr.Verify(key1.PublicKey.X, key1.PublicKey.Y, &message, signature1))
 	fmt.Println(schnorr.Verify(key2.PublicKey.X, key2.PublicKey.Y, &message, signature2))
 	fmt.Println(schnorr.Verify(addedPubKeys.X, addedPubKeys.Y, &message, &addedSignatures))

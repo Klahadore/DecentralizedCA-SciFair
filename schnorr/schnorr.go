@@ -11,7 +11,7 @@ import (
 
 	"math/big"
 
-	"fmt"
+	//"fmt"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
@@ -60,11 +60,24 @@ func Sign(privateKey *big.Int, message *[]byte) (*Schnorr, error) {
 	return &Schnorr{R, s}, nil
 }
 
+// func SignWithNonce(privateKey *big.Int, nonce *big.Int, message *[]byte) (*Schnorr, error) {
+// 	//Calculate r = g^k mod p
+// 	R := Point{}
+// 	R.X, R.Y = curve.ScalarBaseMult(nonce.Bytes())
+// 	//Calculate e = H(R||m)
+// 	e := Hash(append(R.X.Bytes(), *message...))
+// 	eInt := byteToInt(e)
+// 	//Calculate s = k - x * e
+// 	s := new(big.Int).Sub(nonce, new(big.Int).Mul(privateKey, eInt))
+// 	s.Mod(s, curve.N)
+// 	return &Schnorr{R, s}, nil
+// }
+
 // Verify verifies a Schnorr signature for the given message and public key
 func Verify(pkx, pky *big.Int, message *[]byte, signature *Schnorr) bool {
 
 	e := Hash(append(signature.R.X.Bytes(), *message...))
-
+	//fmt.Println("verify R value", signature.R.X)
 	//Calculate r_v, r_v = g^s * y^e
 	yE := Point{}
 	yE.X, yE.Y = curve.ScalarMult(pkx, pky, e)
@@ -76,8 +89,9 @@ func Verify(pkx, pky *big.Int, message *[]byte, signature *Schnorr) bool {
 	// hash must be calculated again, r cannot be compared.
 	ev := Hash(append(rv.Bytes(), *message...))
 
+	// fmt.Println("hashes", byteToInt(e).String(), byteToInt(ev).String())
 	//fmt.Println(pkx.String())
-	fmt.Println(signature.S.String())
+	// fmt.Println(signature.S.String())
 	return byteToInt(ev).Cmp(byteToInt(e)) == 0
 }
 
@@ -100,6 +114,7 @@ func AggregateSignatures(signature1, signature2 Schnorr) (Schnorr, error) {
 	s := new(big.Int).Add(signature1.S, signature2.S)
 
 	s.Mod(s, curve.N)
+
 	return Schnorr{R, s}, nil
 }
 
@@ -107,5 +122,6 @@ func AggregatePublicKeys(publicKey1, publicKey2 Point) (Point, error) {
 	// Initialize the aggregate public key to be the zero point
 	agg := Point{}
 	agg.X, agg.Y = curve.Add(publicKey1.X, publicKey1.Y, publicKey2.X, publicKey2.Y)
+
 	return agg, nil
 }
