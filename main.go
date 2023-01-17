@@ -41,9 +41,16 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println("the message is", string(message))
 
-	fmt.Println(schnorr.Verify(key1.PublicKey.X, key1.PublicKey.Y, &message, signature1))
-	fmt.Println(schnorr.Verify(key2.PublicKey.X, key2.PublicKey.Y, &message, signature2))
+	fmt.Println("Signature 1")
+	fmt.Println("Public Key", pubKey1Point.X, ",", pubKey1Point.Y)
+	fmt.Println("verify", schnorr.Verify(key1.PublicKey.X, key1.PublicKey.Y, &message, signature1))
+
+	fmt.Println("Signature 2")
+	fmt.Println("Public Key", pubKey2Point.X, ", ", pubKey2Point.Y)
+	fmt.Println("verify", schnorr.Verify(key2.PublicKey.X, key2.PublicKey.Y, &message, signature2))
+
 	fmt.Println(schnorr.Verify(addedPubKeys.X, addedPubKeys.Y, &message, &addedSignatures))
 
 }
