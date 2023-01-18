@@ -1,14 +1,9 @@
 # Decentralized Certificate Authority Project
 
-Includes schnorr signatures over the curve secp256k1.
-Schnorr package is designed to be able to be used independently.
+This is for my science fair, 
 
+Prototype Schnorr signature implementation
 
-Is a simplified implementation of MuSig.
-Generates x.509 certificates.
+**Do Not Use**
 
-
-
-
-
-
+Help - Aggregating signatures does not work, if anyone sees a reason why, please let me know, also if you see any other issues with the implementation please le me know
